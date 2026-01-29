@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | CampusConnect</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .admin-nav button {
+      padding: 10px 15px;
+      background: var(--tut-blue);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .admin-nav button.active {
+      background: var(--tut-red);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--tut-blue), var(--tut-red));
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    .user-table, .request-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .user-table th, .user-table td,
+    .request-table th, .request-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .user-table th, .request-table th {
+      background: var(--tut-blue);
+      color: white;
+    }
+
+    .action-btn {
+      padding: 5px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .approve-btn { background: #28a745; color: white; }
+    .reject-btn { background: #dc3545; color: white; }
+    .reply-btn { background: var(--tut-blue); color: white; }
+
+    /* ===== STATUS BADGES ===== */
+.status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status.pending {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.status.approved {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.status.rejected {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>CampusConnect Admin Dashboard</h1>
+  <nav>
+    <span id="adminInfo">Admin Panel</span>
+    <button onclick="logout()">Logout</button>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number" id="totalUsers">0</div>
+      <div>Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalRequests">0</div>
+      <div>Service Requests</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="pendingRequests">0</div>
+      <div>Pending Requests</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalFeedback">0</div>
+      <div>Feedback Items</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="admin-nav">
+    <button onclick="showSection('users')" class="active" id="usersBtn">Users</button>
+    <button onclick="showSection('requests')" id="requestsBtn">Service Requests</button>
+    <button onclick="showSection('announcements')" id="announcementsBtn">Announcements</button>
+    <button onclick="showSection('feedback')" id="feedbackBtn">Feedback</button>
+    <button onclick="showSection('statistics')" id="statisticsBtn">Statistics</button>
+  </div>
+
+  <!-- USERS -->
+  <div id="usersSection" class="admin-section active">
+    <div class="card">
+      <h3>👥 User Management</h3>
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Email</th>
+            <th>Number</th>
+            <th>Registered</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REQUESTS -->
+  <div id="requestsSection" class="admin-section">
+    <div class="card">
+      <h3>📋 Service Requests Management</h3>
+      <table class="request-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Type</th>
+            <th>Details</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="requestsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ANNOUNCEMENTS -->
+  <div id="announcementsSection" class="admin-section">
+    <div class="card">
+      <h3>📢 Announcement Management</h3>
+      <input id="announcementTitle" placeholder="Title">
+      <textarea id="announcementContent" rows="4" placeholder="Content"></textarea>
+      <select id="announcementType">
+        <option value="general">General</option>
+        <option value="academic">Academic</option>
+        <option value="event">Event</option>
+        <option value="urgent">Urgent</option>
+      </select>
+      <button class="primary" onclick="postAnnouncement()">Post Announcement</button>
+      <div id="currentAnnouncements"></div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div id="feedbackSection" class="admin-section">
+    <div class="card">
+      <h3>💬 Feedback Management</h3>
+      <div id="feedbackList"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="statisticsSection" class="admin-section">
+    <div class="card">
+      <h3>📊 System Statistics</h3>
+      <p>Students: <span id="studentCount">0</span></p>
+      <p>Staff: <span id="staffCount">0</span></p>
+    </div>
+  </div>
+
+</div>
+
+<footer>© 2026 Tshwane University of Technology | Faculty of ICT</footer>
+
+<script>
+/* =============================
+   AUTH
+============================= */
+function getCurrentUser() {
+  return JSON.parse(localStorage.getItem("currentUser"));
+}
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html";
+}
+
+/* =============================
+   NAV
+============================= */
+function showSection(section) {
+  document.querySelectorAll(".admin-section").forEach(s =>
+    s.classList.remove("active")
+  );
+  document.querySelectorAll(".admin-nav button").forEach(b =>
+    b.classList.remove("active")
+  );
+
+  document.getElementById(section + "Section").classList.add("active");
+  document.getElementById(section + "Btn").classList.add("active");
+
+  if (section === "requests") loadRequests();
+  if (section === "users") loadUsers();
+}
+
+/* =============================
+   USERS
+============================= */
+function loadUsers() {
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const tbody = document.getElementById("usersTableBody");
+  tbody.innerHTML = "";
+
+  if (users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">No users found</td></tr>`;
+    return;
+  }
+
+  users.forEach(u => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${u.firstName} ${u.lastName}</td>
+        <td>${u.userType}</td>
+        <td>${u.email}</td>
+        <td>${u.identifier}</td>
+        <td>${new Date(u.id).toLocaleDateString()}</td>
+        <td>
+          <button class="action-btn reply-btn">Contact</button>
+        </td>
+      </tr>`;
+  });
+}
+
+/* =============================
+   REQUESTS
+============================= */
+function loadRequests() {
+  const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+  const tbody = document.getElementById("requestsTableBody");
+  tbody.innerHTML = "";
+
+  if (requests.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">No service requests</td></tr>`;
+    return;
+  }
+
+  requests.forEach(r => {
+    const statusClass = r.status.toLowerCase(); // pending / approved / rejected
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.userName}</td>
+        <td>${r.type}</td>
+        <td>${r.details}</td>
+        <td>
+          <span class="status ${statusClass}">
+            ${r.status}
+          </span>
+        </td>
+        <td>${new Date(r.timestamp).toLocaleDateString()}</td>
+        <td>
+          <button class="action-btn approve-btn"
+            onclick="updateStatus(${r.id}, 'Approved')">
+            Approve
+          </button>
+          <button class="action-btn reject-btn"
+            onclick="updateStatus(${r.id}, 'Rejected')">
+            Reject
+          </button>
+        </td>
+      </tr>`;
+  });
+}
+
+function updateStatus(id, status) {
+  const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+  const index = requests.findIndex(r => r.id === id);
+  if (index === -1) return;
+
+  requests[index].status = status;
+  localStorage.setItem("requests", JSON.stringify(requests));
+
+  loadRequests();
+  updateStats();
+}
+
+/* =============================
+   STATS
+============================= */
+function updateStats() {
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+
+  document.getElementById("totalUsers").textContent = users.length;
+  document.getElementById("totalRequests").textContent = requests.length;
+  document.getElementById("pendingRequests").textContent =
+    requests.filter(r => r.status === "Pending").length;
+  document.getElementById("totalFeedback").textContent =
+    JSON.parse(localStorage.getItem("feedback") || "[]").length;
+}
+
+/* =============================
+   INIT
+============================= */
+window.onload = () => {
+  const user = getCurrentUser();
+  if (!user || user.userType !== "admin") {
+    window.location.href = "admin-login.html";
+    return;
+  }
+
+  loadUsers();
+  updateStats();
+};
+</script>
+
+
+</body>
+</html>
